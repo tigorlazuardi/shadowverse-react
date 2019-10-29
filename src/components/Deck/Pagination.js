@@ -5,13 +5,13 @@ import Pagination from 'material-ui-flat-pagination'
 
 const theme = createMuiTheme()
 
-const Page = ({ offset, setOffset, count }) => {
+const Page = ({ offset, setOffset, count, limit }) => {
   return (
     <div style={style}>
       <MuiThemeProvider theme={theme}>
         <CssBaseline />
         <Pagination
-          limit={24}
+          limit={limit}
           offset={offset}
           total={count}
           onClick={(e, offset) => {

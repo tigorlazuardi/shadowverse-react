@@ -6,6 +6,8 @@ import Typography from '@material-ui/core/Typography'
 import IconButton from '@material-ui/core/IconButton'
 import MenuIcon from '@material-ui/icons/Menu'
 import NavbarDrawer from './NavbarDrawer'
+import { useLocation, useHistory } from 'react-router-dom'
+import Button from '@material-ui/core/Button'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -20,6 +22,8 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 function Navbar() {
+  const { pathname } = useLocation()
+  const { goBack } = useHistory()
   const classes = useStyles()
   const [drawer, setDrawer] = useState(false)
   return (
@@ -37,9 +41,14 @@ function Navbar() {
           <Typography variant='h6' className={classes.title}>
             Shadow Verse
           </Typography>
+          {pathname !== '/' && (
+            <Button onClick={() => goBack()} style={{ color: 'white' }}>
+              Back
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
-      <NavbarDrawer drawer={drawer} setDrawer={setDrawer} />
+      <NavbarDrawer drawer={drawer} setDrawer={() => setDrawer(false)} />
     </nav>
   )
 }

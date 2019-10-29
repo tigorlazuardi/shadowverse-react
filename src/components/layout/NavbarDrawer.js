@@ -22,7 +22,11 @@ const NavbarDrawer = ({ drawer, setDrawer }) => {
   return (
     <Drawer open={drawer} onClose={() => setDrawer(false)}>
       <List>
-        <ListItem component={Link} to={'/'} className={classes.list}>
+        <ListItem
+          component={Link}
+          to={'/'}
+          className={classes.list}
+          onClick={() => setDrawer(false)}>
           <ListItemIcon>
             <Home />
           </ListItemIcon>

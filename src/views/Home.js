@@ -5,19 +5,74 @@ import axios from '../config/axios'
 import Spinner from '../components/feedback/Spinner'
 import SVCard from '../components/Deck/SVCard'
 import Pagination from '../components/Deck/Pagination'
+import TextField from '@material-ui/core/TextField'
+import debounce from 'lodash.debounce'
 
 export default class Home extends Component {
-  state = {
-    cards: [],
-    loading: false,
-    count: 0,
-    offset: 0,
+  constructor() {
+    super()
+    this.searchDebounced = debounce(this.search, 500)
+    this.state = {
+      cards: [],
+      loading: false,
+      count: 0,
+      offset: 0,
+      query: '',
+      limit: 18,
+    }
+  }
+
+  handleSearch = (event) => {
+    this.setState({ query: event.target.value })
+    this.searchDebounced()
+  }
+
+  async search() {
+    const { limit, query } = this.state
+    if (!query) {
+      this.getAllCards()
+    } else {
+      this.setState({ loading: true })
+      try {
+        let response = await axios.get(
+          `/cards?_page=1&_limit=${limit}&_sort=id&q=${query}`
+        )
+        console.log(response.data)
+        this.setState({
+          cards: response.data,
+          count: Number(response.headers['x-total-count']),
+        })
+      } catch (err) {
+        console.log(err)
+      } finally {
+        this.setState({ loading: false })
+      }
+    }
   }
 
   async componentDidMount() {
     this.setState({ loading: true })
     try {
-      let response = await axios.get('/cards?_page=1&_limit=24&_sort=id')
+      let response = await axios.get(
+        `/cards?_page=1&_limit=${this.state.limit}&_sort=id`
+      )
+      this.setState({
+        cards: response.data,
+        count: Number(response.headers['x-total-count']),
+      })
+    } catch (err) {
+      console.log(err)
+    } finally {
+      this.setState({ loading: false })
+    }
+  }
+
+  async getAllCards() {
+    this.setState({ loading: true })
+    try {
+      let response = await axios.get(
+        `/cards?_page=1&_limit=${this.state.limit}&_sort=id`
+      )
       this.setState({
         cards: response.data,
         count: Number(response.headers['x-total-count']),
@@ -30,11 +85,14 @@ export default class Home extends Component {
   }
 
   setOffset = async (val) => {
+    const { query, limit } = this.state
     this.setState({ offset: val, loading: true })
+    let url = `/cards?_page=${val / limit + 1}&_limit=18&_sort=id`
+    if (query) {
+      url += `&q=${query}`
+    }
     try {
-      let response = await axios.get(
-        `/cards?_page=${val / 24 + 1}&_limit=24&_sort=id`
-      )
+      let response = await axios.get(url)
       this.setState({
         cards: response.data,
       })
@@ -46,19 +104,34 @@ export default class Home extends Component {
   }
 
   render() {
-    const { loading, cards, count, offset } = this.state
-    if (loading) {
-      return <Spinner />
-    } else {
-      return (
-        <Container maxWidth={false}>
-          {count && (
+    const { loading, cards, count, offset, limit, query } = this.state
+    return (
+      <Container maxWidth={false}>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <TextField
+            label='Search'
+            margin='normal'
+            variant='outlined'
+            fullWidth={true}
+            value={query}
+            onChange={this.handleSearch}
+          />
+        </div>
+        {loading ? (
+          <Spinner />
+        ) : (
+          count > 0 && (
             <Pagination
               offset={offset}
               setOffset={this.setOffset}
               count={count}
+              limit={limit}
             />
-          )}
+          )
+        )}
+        {loading ? (
+          ''
+        ) : (
           <Grid container spacing={2} justify='center'>
             {cards.map(
               (el) =>
@@ -69,8 +142,8 @@ export default class Home extends Component {
                 )
             )}
           </Grid>
-        </Container>
-      )
-    }
+        )}
+      </Container>
+    )
   }
 }
